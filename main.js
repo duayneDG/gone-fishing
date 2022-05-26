@@ -1,149 +1,221 @@
-let prompt = require('prompt-sync')(); 
-/*
-* You make at least three commits in git (after completing parts of the project)
-* The user is able to 'catch' fish with randomly generated names, weights, and values
-* The time of day is shown to the user
-* The user can only fish for six hours
-* The user can only catch at maximum 10 lbs of fish
-* Each turn, the sum of the user's caught fishes' weight and value is displayed
-* At the end of the game, all the fish that the user caught are displayed along
-with a sum of their weight and value 
-*/
+const chalk = require('chalk')
+const prompt = require('prompt-sync')({sigint:true});
 
-let fishWeight = 0; 
-let caughtFishCollection = [];
-let hourCount = 0; 
-console.log(caughtFishCollection, "caught fish collection after hour count")
-console.log(hourCount, "hour Count")
+console.log("")
+console.log(chalk.blue("You've gone fishing! Try to maximize the value of your caught fish. You can fish for six hours (till 12:00pm) and can catch at most 10 lbs of fish."))
+console.log("")
+console.log("=================================================")
+console.log("")
 
-let flag = true
+// Global Variables -----------
 
-while (flag){
-
-    welcomeDisplay()
-
-    function welcomeDisplay(){
-
-        console.log("we are going fishing today. Here are the rules: you have 6 hours to fish and you cannot exceed 10lbs per USDA reguations section 4c-103\n");
-
-        let fishingStart = Number(prompt(`Would you like to start fishing? PRESS: 1 'YES' OR Press enter for 'No' `)); 
-
-        if(fishingStart === 1 ){
-            fishingGame()
-        }else {
-            return fishingGameDecision()
-            } 
-    }    
-
-    function fishingGame(){
-
-        let flag = true; 
-        while(flag){
-
-            let cast = prompt('Press enter when you are ready to cast ')
-            console.log(cast)
-            let fish = generateRandomFish();
-            let caughtFishMessage = `Congrats, you caught a ${fish.name} weighting ${fish.weight}lbs with a value of: $${fish.price}`
-            console.log(caughtFishMessage)
-
-            let keepOrNot = Number(prompt("Would you like to keep this catch? 1 for 'Yes' press enter for 'No' "))
-
-             // adds fish and weights after confirmation
-            
-            if (keepOrNot === 1){
-                console.log(hourCount, "hour")
-            }else{
-                caughtFishCollection.pop()
-                console.log(caughtFishCollection, 'fish collection')
-                console.log(gameDisplay()) 
-                 
-            }  
-            flag = false  
-            
-        }
-        
-    }
-
-    
-
-    function generateRandomFish(){
-        let fishName = [
-            "oscar", "majarra", "Apche Trout","articGreyling", "Atlantic Herring","American Gizzard", "Atlantic Salmon", "Bigeye", 'Black Crappie', "Chain Pickerel", "Redear Sunfish", "Saugeye"];
-
-        let fishWeight = [2.00, 2.02, 5.00, 9.00, 2.00, 1.6, 2, 3.08, 2, 4, 1, 4];
-        let fishPrice = [ 3.99, 9.62, 70.00, 24.99, 12.50, 9.99, 3.99, 3.99, 4.99, 11.99, 6.99, 18.99]
-        
-        let randomNumber = (Math.random(fishWeight.length)*fishWeight.length).toFixed()
-        
-        let randomFish = fishName[randomNumber]
-        let randomWeight = fishWeight[randomNumber]
-        let randomFishPrice = fishPrice[randomNumber]
-
-        let fish = {
-            'name': randomFish,
-            'weight': randomWeight,
-            'price': randomFishPrice
-        }
-
-        fishWeight += fish.weight;
-        caughtFishCollection.push(fish)
-        hourCount += 1;
-        return fish
-
-        // console.log(randomFish,randomWeight,randomFishPrice)
-    }
-
-    
-    function gameDisplay(){
-
-       let displayMessage = console.log(`Total fish Caught ${caughtFishCollection.length} \n Fish Total Weighing: ${fishWeight}`)
-       console.log(prompt(`${displayMessage}`))
-       let endFishing = fishingGameDecision()
-
-        if(endFishing === true){
-            return endFishing
-        }
-        
-    }
-
-    function fishingGameDecision(){
-
-        if(caughtFishCollection === 0){
-            let newFisherman = Number(prompt('Is this your first time? Press 1 for "Yes" otherwise press enter '))
-            if(newFisherman === 1){
-                return true
-            } 
-        }else{
-            let fishingContinuation = Number(prompt('Would you like to continue fishing? Press 1 for "Yes" otherwise press enter '))
-        
-            if(fishingContinuation === 1 && caughtFishCollection > 0){
-                fishingContinuation = true;
-                return fishingContinuation
-            }else{
-               exitGame()
-            }
-            
-        }
-        function exitGame (){
-
-            exitMessage = prompt('thank you for playing press enter to exit..')
-            return false
-        }
-        
-    }
-
-    flag = exitGame()
+let fishesCaught = []
+let fishing ={
+    weight : 0,
+    value: 0,
+    treasure: 0,
+    fishes : fishesCaught
 }
 
-    
- 
+// condition values
+let timesUp = ""
+let min = 15
+let max = 90
+let chumWater = false
+let time = 0
+// Global Variables -------------
 
+function randomNumber(min, max){
+    return Math.random() * (max - min) + min
+}
+function addFish(weight, fish, price){
+    fishesCaught.push({name : fish,
+                weight : weight,
+                value : price.toFixed(2)})
+                fishing.value += Number(price)
+                fishing.weight += Number(weight)
+}
+function fishSizeChecker(weight){
+    if(weight < 1){
+        return "Tiny"
+    }
+    else if(1< weight && weight <2){
+        return "Small"
+    }
+    else if(2<= weight && weight <3){
+        return "Medium"
+    }
+    else if(3<= weight && weight <4){
+        return "Big"
+    }
+    else if(weight && weight >= 4){
+        return "Huge"
+    }
+}
+function timeStamp(time){
+    let hour = 6
+    let minutes = 0
+    while(time >= 60){
+        time -= 60
+        hour += 1
+    }
+    minutes = time
+    let formattedHr = ("0" + hour).slice(-2)
+    let formattedMin = ("0" + minutes).slice(-2)
+    return `${formattedHr}:${formattedMin}am`
+}
+function selectionValidator(input, a, b){
+    if(input === a){
+        return "add"
+    }
+    else if(input === b){
+        return "deny"
+    }
+    else{
+        console.log(chalk.redBright("Please select a valid option."))
+        i = prompt(">")
+        return selectionValidator(i,a,b)
+    }
+}
+function weightChecker(w1, w2){
+    let weight1 = fishing.weight -w1
+    let weight2 = weight1 + w2
+    if(weight2 >10){
+        return false
+    }
+    else{
+        return true
+    }
+}
+function validOption(w1,w2){
+    let counter = 0
+    for(let fish of fishing.fishes){
+        let temp = fishing.weight - fish.weight
+        if(temp <=10){
+            counter++
+        }
+    }
+    if(counter > 0){
+        return true
+    }
+    else{
+        return false
+    }
+}
 
+while (time< 360){
+    // Calculate the time it takes to get a fish
+    time += (Math.ceil(randomNumber(min,max)))
+    if(time > 360){
+        timesUp = "Your ran out of time before you can catch another fish."
+        break
+    }
+    if(chumWater === false){
+        console.log('Would you like to chum the water to catch two times faster? [yes] or [no]')
+        const chum = prompt(">").toLowerCase()
+        const validate = selectionValidator(chum, "yes", "no")
+            if(validate === "add"){
+                min = 10;
+                max = 60;
+                time += 30;
+                chumWater = true;
+                console.log("")
+                console.log("You chose to chum the water.")
+                console.log("")
+            }
+            else if(validate === "deny"){
+                console.log("")
+                console.log("You chose not to chum the water.")
+                console.log("")
+            }
+        }
+    // Catch information
+    console.log(`The time is ${chalk.greenBright(timeStamp(time))}. So far you've caught:`)
+    console.log(chalk.yellow(` ${fishing.fishes.length} fish(s),`), chalk.cyan(`${fishing.weight.toFixed(2)} lbs,`), chalk.green(`$${fishing.value.toFixed(2)}`))
+    console.log("")
+    // weight checker.
+    if(fishing.weight >10){
+        break
+    }
+    // catching fish
+    const fishes = [{name:"Bass", price : 3},
+                    {name:"bowfin", price : 1.5},
+                    {name:"catfish", price : 1},
+                    {name:"walleye", price : 2},
+                    {name:"lake sturgeon", price : 12},
+                    {name:"northern pike", price : 3},
+                    {name:"salmon", price : 8},
+                    {name:"trout", price : 7},
+                    {name:"Golden dubloon", price : 500},
+                    {name:"Valueless boot", price:0}];
 
+    let weight =(Math.round(randomNumber(0,5)*100)/100)
+    let fishIndex = Math.ceil(randomNumber(0.1,fishes.length-1))
+    let result = `${(fishes[fishIndex].name)}`
+    let fishValue = fishes[fishIndex].price
+    let fishCaught =`${fishSizeChecker(weight)} ${result}`
+    if(fishValue == 0){
+        console.log(`Bummer, You got a ${chalk.magenta(result)} instead of a fish.`)
+        console.log("Your action: Please enter [c] to continue fishing.")
+        const confirm = prompt(">").toLowerCase()
+        selectionValidator(confirm , "c","c");
+        continue
+    }
+    else if(result === "Golden dubloon"){
+        console.log(chalk.whiteBright.bgGray(`LUCKY!!! You got a high-value ${chalk.yellowBright(result)} valued at`, chalk.greenBright("$500"),"."))
+        console.log("Your action: [k]eep or [t]hrow away?")
+        const confirm = prompt(">").toLowerCase()
+        const valid = selectionValidator(confirm, "k", "t");
+        if(valid == "add"){
+            console.log(chalk.bgGray("You chose to keep the dubloon."))
+            fishing.value += 500;
+            fishing.treasure +=1;
+        }
+        else if(valid == "deny"){
+            console.log(chalk.bgGray("You chose to toss the dubloon."))
+        }
+    }
+    else{// price of the fishes scale with weight instead of randomizing it
+    // let price =(Math.round((Math.random()*100)*100)/100)
+    let price =(Math.round((weight*fishValue)*100)/100)
 
+    console.log(`You caught a '${chalk.yellowBright(fishCaught)}' weighing`, chalk.cyanBright(`${weight} lbs`), `and valued at`, chalk.green(`$${price.toFixed(2)}`))
 
-    
+    console.log("Your action: [c]atch or [r]elease?")
+    let input = prompt('>').toLowerCase()
+    console.log("")
+    let totalWeight = fishing.weight + weight
+    if(totalWeight > 10){
+        console.log('This fish would put you over 10 lbs, so you release it.')
 
-    
-
-    
+        }else{   
+        const valid = selectionValidator(input, "c", "r");
+            if(valid == "add"){
+                console.log(chalk.bgGray("You chose to catch the fish."))
+                addFish(weight,fishCaught,price)
+            }
+            else if(valid == "deny"){
+                console.log(chalk.bgGray("You chose to release the fish."))
+            }
+        }
+        console.log("")
+        console.log("=================================================")
+        console.log("")
+    }
+}
+console.log("The time is", chalk.red("12:00pm"), "Times up!")
+if(timesUp.length>0){
+    console.log(timesUp)
+}
+console.log("")
+console.log(`You caught ${fishing.fishes.length} fish:`)
+for(const fish of fishing.fishes){
+    console.log(`* ${chalk.yellow(fish.name)},`, chalk.cyan(`${fish.weight} lbs,`), chalk.green(`$${fish.value}`))
+}
+console.log("")
+if(fishing.treasure >0){
+    console.log(chalk.yellowBright(`You also found ${fishing.treasure} valuable item(s).`, chalk.green(`$${fishing.treasure*500}`)))
+    console.log("")
+}
+console.log(`Total weight:`, chalk.cyanBright(`${fishing.weight.toFixed(2)} lbs`))
+console.log(`Total value:`, chalk.greenBright(`$${fishing.value.toFixed(2)}`))
